@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -48,18 +50,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  Offset _offset = Offset.zero;
+  double _rx = 0.0, _ry = 0.0, _rz = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -69,47 +61,103 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return GestureDetector(
+      onPanUpdate: (details) {
+        _rx += details.delta.dx;
+        _ry += details.delta.dy;
+        setState(() {
+          _rx %= pi * 2;
+          _ry %= pi * 2;
+          _rz %= pi * 2;
+        });
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Transform(
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateX(_rx * pi / 180)
+                    ..rotateY(_ry * pi / 180)
+                    ..rotateZ(_rz * pi / 180),
+                  alignment: Alignment.center,
+                  child: const Center(child: Cube())),
+              const SizedBox(height: 32),
+              Slider(
+                value: _ry,
+                min: 0,
+                max: 360,
+                onChanged: (double value) => setState(() {
+                  _ry = value;
+                }),
+              ),
+              Slider(
+                value: _rx,
+                min: 0,
+                max: 360,
+                onChanged: (double value) => setState(() {
+                  _rx = value;
+                }),
+              ),
+              Slider(
+                value: _rz,
+                min: 0,
+                max: 360,
+                onChanged: (double value) => setState(() {
+                  _rz = value;
+                }),
+              )
+            ],
+          ),
+        ),
+        // This trailing comma makes auto-formatting nicer for build methods.
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+    );
+  }
+}
+
+class Cube extends StatelessWidget {
+  const Cube({super.key});
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Stack(children: [
+      Transform(
+        transform: Matrix4.identity()..translate(0.0, 0.0, 100.0),
+        child: Container(
+          color: Colors.red,
+          width: 200,
+          height: 200,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+      Transform(
+        //startboard
+        transform: Matrix4.identity()
+          ..rotateY(-pi / 2)
+          ..translate(-100.0, 0.0, 0.0),
+        child: Container(
+          color: Colors.orange,
+          width: 200,
+          height: 200,
+        ),
+      ),
+      Transform(
+        transform: Matrix4.identity()
+          ..rotateX(pi / 2)
+          ..translate(0.0, -100.0, 0.0),
+        child: Container(
+          color: Colors.blue,
+          width: 200,
+          height: 200,
+        ),
+      ),
+    ]);
   }
 }
